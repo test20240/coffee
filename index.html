@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZXing Barcode Scanner</title>
-    <script src="https://unpkg.com/@zxing/browser@latest/umd/index.min.js"></script>
+    <title>QR Code Scanner</title>
+    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -28,7 +28,7 @@
             border: 1px solid #ccc;
         }
 
-        #barcode-result {
+        #qrcode-result {
             text-align: center;
             font-size: 18px;
             margin: 20px;
@@ -71,16 +71,16 @@
 </head>
 <body>
 
-    <h1>ZXing Barcode Scanner</h1>
+    <h1>QR Code Scanner</h1>
 
     <!-- Camera window -->
     <div id="scanner-container">
-        <video id="scanner" muted></video>
+        <div id="scanner"></div>
     </div>
 
-    <!-- Barcode result display -->
-    <div id="barcode-result" class="hidden">
-        Scanned Barcode: <span id="barcode-output">Waiting for scan...</span>
+    <!-- QR Code result display -->
+    <div id="qrcode-result" class="hidden">
+        Scanned QR Code: <span id="qrcode-output">Waiting for scan...</span>
     </div>
 
     <!-- Control buttons -->
@@ -90,11 +90,11 @@
         <button id="reject-btn" disabled>Reject</button>
     </div>
 
-    <!-- List of accepted barcodes -->
+    <!-- List of accepted QR codes -->
     <table id="accepted-list" class="hidden">
         <thead>
             <tr>
-                <th>Accepted Barcode</th>
+                <th>Accepted QR Code</th>
             </tr>
         </thead>
         <tbody>
@@ -103,78 +103,86 @@
     </table>
 
     <script>
-        const codeReader = new ZXing.BrowserMultiFormatReader();
-        let currentBarcode = null;
-        let acceptedBarcodes = [];
+        let html5QrCode;
+        let currentQrCode = null;
+        let acceptedQrCodes = [];
 
         document.addEventListener("DOMContentLoaded", function () {
             const scannerContainer = document.getElementById('scanner-container');
-            const barcodeResult = document.getElementById('barcode-result');
-            const barcodeOutput = document.getElementById('barcode-output');
+            const qrcodeResult = document.getElementById('qrcode-result');
+            const qrcodeOutput = document.getElementById('qrcode-output');
             const acceptBtn = document.getElementById('accept-btn');
             const rejectBtn = document.getElementById('reject-btn');
             const newScanBtn = document.getElementById('new-scan-btn');
             const acceptedList = document.getElementById('accepted-list');
 
+            // Initialize the scanner
+            html5QrCode = new Html5Qrcode("scanner");
+
             // Start the scanner when the "New Scan" button is clicked
             newScanBtn.addEventListener('click', function () {
                 startScanner();
                 scannerContainer.style.display = 'block'; // Show the scanner
-                barcodeResult.classList.add('hidden'); // Hide barcode result
+                qrcodeResult.classList.add('hidden'); // Hide QR code result
                 acceptBtn.disabled = true;
                 rejectBtn.disabled = true;
             });
 
             // Accept button logic
             acceptBtn.addEventListener('click', function () {
-                if (currentBarcode) {
-                    acceptedBarcodes.push(currentBarcode);
+                if (currentQrCode) {
+                    acceptedQrCodes.push(currentQrCode);
                     updateAcceptedList();
-                    clearBarcodeResult();
+                    clearQrCodeResult();
                 }
             });
 
             // Reject button logic
             rejectBtn.addEventListener('click', function () {
-                clearBarcodeResult();
+                clearQrCodeResult();
             });
 
             // Function to start the scanner
             function startScanner() {
-                codeReader.decodeOnceFromVideoDevice(undefined, 'scanner')
-                    .then(result => {
-                        currentBarcode = result.text;
-                        barcodeOutput.textContent = currentBarcode;
-                        barcodeResult.classList.remove('hidden'); // Show barcode result
+                html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 },
+                    qrCodeMessage => {
+                        currentQrCode = qrCodeMessage;
+                        qrcodeOutput.textContent = currentQrCode;
+                        qrcodeResult.classList.remove('hidden'); // Show QR code result
 
                         // Enable Accept and Reject buttons
                         acceptBtn.disabled = false;
                         rejectBtn.disabled = false;
-                    })
-                    .catch(err => console.error(err));
+
+                        html5QrCode.stop(); // Stop the camera after detecting
+                    },
+                    errorMessage => {
+                        console.warn("QR Code scanning failed. Error: ", errorMessage);
+                    }
+                );
             }
 
-            // Function to update the accepted barcode list
+            // Function to update the accepted QR code list
             function updateAcceptedList() {
                 const tbody = acceptedList.querySelector('tbody');
                 tbody.innerHTML = ''; // Clear current list
 
-                acceptedBarcodes.forEach(barcode => {
+                acceptedQrCodes.forEach(qrCode => {
                     const row = document.createElement('tr');
                     const cell = document.createElement('td');
-                    cell.textContent = barcode;
+                    cell.textContent = qrCode;
                     row.appendChild(cell);
                     tbody.appendChild(row);
                 });
 
-                acceptedList.classList.remove('hidden'); // Show the accepted barcode list
+                acceptedList.classList.remove('hidden'); // Show the accepted QR code list
             }
 
-            // Function to clear the displayed barcode result
-            function clearBarcodeResult() {
-                currentBarcode = null;
-                barcodeOutput.textContent = "Waiting for scan...";
-                barcodeResult.classList.add('hidden'); // Hide barcode result
+            // Function to clear the displayed QR code result
+            function clearQrCodeResult() {
+                currentQrCode = null;
+                qrcodeOutput.textContent = "Waiting for scan...";
+                qrcodeResult.classList.add('hidden'); // Hide QR code result
                 acceptBtn.disabled = true;
                 rejectBtn.disabled = true;
             }
