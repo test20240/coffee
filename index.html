@@ -18,6 +18,15 @@
 
         .container {
             text-align: center;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        #reader {
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            margin: 0 auto;
         }
 
         .buttons {
@@ -43,16 +52,23 @@
             padding: 10px;
             border-radius: 5px;
         }
+
+        #scan-result {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <div id="reader" style="width: 100%; display: none;"></div>
+        <div id="reader" style="display: none;"></div>
         <div class="buttons">
-            <button id="accept-btn">Accept</button>
-            <button id="reject-btn">Reject</button>
             <button id="new-btn">New</button>
+            <button id="accept-btn" disabled>Accept</button>
+            <button id="reject-btn" disabled>Reject</button>
         </div>
+        <div id="scan-result"></div>
         <ul id="accepted-list"></ul>
     </div>
 
@@ -68,9 +84,16 @@
 
         // Start QR code scanner
         function startScanner() {
+            document.getElementById("reader").style.display = "block"; // Show the camera
+            document.getElementById("scan-result").textContent = ""; // Clear previous scan result
+            currentScanData = null;
+
             const qrCodeSuccessCallback = (qrCodeMessage) => {
-                currentScanData = qrCodeMessage;
-                console.log("QR Code scanned: ", qrCodeMessage); // Debugging
+                currentScanData = qrCodeMessage; // Store scanned text
+                stopScanner(); // Stop scanning after successful scan
+                document.getElementById("scan-result").textContent = "Scanned: " + currentScanData; // Show the result
+                document.getElementById("accept-btn").disabled = false; // Enable "Accept" button
+                document.getElementById("reject-btn").disabled = false; // Enable "Reject" button
             };
 
             const config = { facingMode: "environment" };
@@ -84,7 +107,9 @@
         // Stop QR code scanner
         function stopScanner() {
             if (html5QrCode) {
-                html5QrCode.stop().catch(err => {
+                html5QrCode.stop().then(() => {
+                    document.getElementById("reader").style.display = "none"; // Hide the camera
+                }).catch(err => {
                     console.error("Unable to stop the QR code scanner:", err);
                 });
             }
@@ -107,8 +132,9 @@
                 acceptedScans.push(currentScanData);
                 updateAcceptedList();
                 currentScanData = null;
-                stopScanner();
-                document.getElementById("reader").style.display = "none"; // Hide the camera
+                document.getElementById("scan-result").textContent = ""; // Clear scan result
+                document.getElementById("accept-btn").disabled = true; // Disable "Accept" button
+                document.getElementById("reject-btn").disabled = true; // Disable "Reject" button
             } else {
                 alert("No QR code scanned yet!");
             }
@@ -117,8 +143,9 @@
         // Reject button event listener
         document.getElementById("reject-btn").addEventListener("click", () => {
             currentScanData = null;
-            stopScanner();
-            document.getElementById("reader").style.display = "none"; // Hide the camera
+            document.getElementById("scan-result").textContent = ""; // Clear scan result
+            document.getElementById("accept-btn").disabled = true; // Disable "Accept" button
+            document.getElementById("reject-btn").disabled = true; // Disable "Reject" button
         });
 
         // New button event listener
@@ -126,7 +153,8 @@
             if (!html5QrCode) {
                 initializeScanner(); // Initialize the scanner if not already done
             }
-            document.getElementById("reader").style.display = "block"; // Show the camera
+            document.getElementById("accept-btn").disabled = true; // Disable "Accept" button
+            document.getElementById("reject-btn").disabled = true; // Disable "Reject" button
             startScanner(); // Start scanning
         });
 
