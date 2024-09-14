@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Code Scanner</title>
-    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+    <title>ZXing Barcode Scanner</title>
+    <script src="https://unpkg.com/@zxing/browser@latest/umd/index.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -28,7 +28,7 @@
             border: 1px solid #ccc;
         }
 
-        #qrcode-result {
+        #barcode-result {
             text-align: center;
             font-size: 18px;
             margin: 20px;
@@ -71,16 +71,16 @@
 </head>
 <body>
 
-    <h1>QR Code Scanner</h1>
+    <h1>ZXing Barcode Scanner</h1>
 
     <!-- Camera window -->
     <div id="scanner-container">
-        <div id="scanner"></div>
+        <video id="scanner" muted></video>
     </div>
 
-    <!-- QR Code result display -->
-    <div id="qrcode-result" class="hidden">
-        Scanned QR Code: <span id="qrcode-output">Waiting for scan...</span>
+    <!-- Barcode result display -->
+    <div id="barcode-result" class="hidden">
+        Scanned Barcode: <span id="barcode-output">Waiting for scan...</span>
     </div>
 
     <!-- Control buttons -->
@@ -90,11 +90,11 @@
         <button id="reject-btn" disabled>Reject</button>
     </div>
 
-    <!-- List of accepted QR codes -->
+    <!-- List of accepted barcodes -->
     <table id="accepted-list" class="hidden">
         <thead>
             <tr>
-                <th>Accepted QR Code</th>
+                <th>Accepted Barcode</th>
             </tr>
         </thead>
         <tbody>
@@ -103,86 +103,89 @@
     </table>
 
     <script>
-        let html5QrCode;
-        let currentQrCode = null;
-        let acceptedQrCodes = [];
+        const codeReader = new ZXing.BrowserMultiFormatReader();
+        let currentBarcode = null;
+        let acceptedBarcodes = [];
 
         document.addEventListener("DOMContentLoaded", function () {
             const scannerContainer = document.getElementById('scanner-container');
-            const qrcodeResult = document.getElementById('qrcode-result');
-            const qrcodeOutput = document.getElementById('qrcode-output');
+            const barcodeResult = document.getElementById('barcode-result');
+            const barcodeOutput = document.getElementById('barcode-output');
             const acceptBtn = document.getElementById('accept-btn');
             const rejectBtn = document.getElementById('reject-btn');
             const newScanBtn = document.getElementById('new-scan-btn');
             const acceptedList = document.getElementById('accepted-list');
 
-            // Initialize the scanner
-            html5QrCode = new Html5Qrcode("scanner");
-
-            // Start the scanner when the "New Scan" button is clicked
+            // Ensure permissions are requested when the "New Scan" button is clicked
             newScanBtn.addEventListener('click', function () {
-                startScanner();
-                scannerContainer.style.display = 'block'; // Show the scanner
-                qrcodeResult.classList.add('hidden'); // Hide QR code result
-                acceptBtn.disabled = true;
-                rejectBtn.disabled = true;
+                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+                        .then(function (stream) {
+                            startScanner();
+                            scannerContainer.style.display = 'block'; // Show the scanner
+                            barcodeResult.classList.add('hidden'); // Hide barcode result
+                            acceptBtn.disabled = true;
+                            rejectBtn.disabled = true;
+                        })
+                        .catch(function (err) {
+                            console.error("Camera access was denied or error occurred:", err);
+                            alert("Error accessing camera. Please make sure the camera permission is granted.");
+                        });
+                } else {
+                    alert("Camera not supported on this device/browser.");
+                }
             });
 
             // Accept button logic
             acceptBtn.addEventListener('click', function () {
-                if (currentQrCode) {
-                    acceptedQrCodes.push(currentQrCode);
+                if (currentBarcode) {
+                    acceptedBarcodes.push(currentBarcode);
                     updateAcceptedList();
-                    clearQrCodeResult();
+                    clearBarcodeResult();
                 }
             });
 
             // Reject button logic
             rejectBtn.addEventListener('click', function () {
-                clearQrCodeResult();
+                clearBarcodeResult();
             });
 
             // Function to start the scanner
             function startScanner() {
-                html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 },
-                    qrCodeMessage => {
-                        currentQrCode = qrCodeMessage;
-                        qrcodeOutput.textContent = currentQrCode;
-                        qrcodeResult.classList.remove('hidden'); // Show QR code result
+                codeReader.decodeOnceFromVideoDevice(undefined, 'scanner')
+                    .then(result => {
+                        currentBarcode = result.text;
+                        barcodeOutput.textContent = currentBarcode;
+                        barcodeResult.classList.remove('hidden'); // Show barcode result
 
                         // Enable Accept and Reject buttons
                         acceptBtn.disabled = false;
                         rejectBtn.disabled = false;
-
-                        html5QrCode.stop(); // Stop the camera after detecting
-                    },
-                    errorMessage => {
-                        console.warn("QR Code scanning failed. Error: ", errorMessage);
-                    }
-                );
+                    })
+                    .catch(err => console.error(err));
             }
 
-            // Function to update the accepted QR code list
+            // Function to update the accepted barcode list
             function updateAcceptedList() {
                 const tbody = acceptedList.querySelector('tbody');
                 tbody.innerHTML = ''; // Clear current list
 
-                acceptedQrCodes.forEach(qrCode => {
+                acceptedBarcodes.forEach(barcode => {
                     const row = document.createElement('tr');
                     const cell = document.createElement('td');
-                    cell.textContent = qrCode;
+                    cell.textContent = barcode;
                     row.appendChild(cell);
                     tbody.appendChild(row);
                 });
 
-                acceptedList.classList.remove('hidden'); // Show the accepted QR code list
+                acceptedList.classList.remove('hidden'); // Show the accepted barcode list
             }
 
-            // Function to clear the displayed QR code result
-            function clearQrCodeResult() {
-                currentQrCode = null;
-                qrcodeOutput.textContent = "Waiting for scan...";
-                qrcodeResult.classList.add('hidden'); // Hide QR code result
+            // Function to clear the displayed barcode result
+            function clearBarcodeResult() {
+                currentBarcode = null;
+                barcodeOutput.textContent = "Waiting for scan...";
+                barcodeResult.classList.add('hidden'); // Hide barcode result
                 acceptBtn.disabled = true;
                 rejectBtn.disabled = true;
             }
