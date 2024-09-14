@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZXing Barcode/QR Code Scanner</title>
-    <!-- Correct ZXingBrowser library -->
-    <script src="https://unpkg.com/@zxing/browser@latest"></script>
+    <title>HTML5 QR Code and Barcode Scanner</title>
+    <!-- HTML5 QR Code library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -61,11 +61,11 @@
 </head>
 <body>
 
-    <h1>ZXing Barcode/QR Code Scanner</h1>
+    <h1>HTML5 QR Code and Barcode Scanner</h1>
 
     <!-- Camera window -->
     <div id="scanner-container">
-        <video id="scanner"></video>
+        <div id="scanner"></div>
     </div>
 
     <!-- Code result display -->
@@ -93,7 +93,7 @@
     </table>
 
     <script>
-        window.addEventListener('load', () => {
+        document.addEventListener("DOMContentLoaded", function () {
             const scannerContainer = document.getElementById('scanner-container');
             const codeResult = document.getElementById('code-result');
             const codeOutput = document.getElementById('code-output');
@@ -102,11 +102,11 @@
             const newScanBtn = document.getElementById('new-scan-btn');
             const acceptedList = document.getElementById('accepted-list');
 
-            let codeReader;
+            let html5QrCode;
             let currentCode = null;
             let acceptedCodes = [];
 
-            // Start the scanner when the "New Scan" button is clicked
+            // Initialize the scanner when the "New Scan" button is clicked
             newScanBtn.addEventListener('click', () => {
                 startScanner();
                 scannerContainer.style.display = 'block'; // Show the scanner
@@ -130,12 +130,19 @@
             });
 
             // Function to start the scanner
-            async function startScanner() {
-                try {
-                    codeReader = new ZXingBrowser.BrowserQRCodeReader();
-                    const result = await codeReader.decodeFromVideoDevice(null, 'scanner');
-                    if (result) {
-                        currentCode = result.text;
+            function startScanner() {
+                // Initialize HTML5 QR Code
+                html5QrCode = new Html5Qrcode("scanner");
+
+                html5QrCode.start(
+                    { facingMode: "environment" }, // Use environment facing mode
+                    {
+                        fps: 10,    // Set the frame rate
+                        qrbox: { width: 250, height: 250 } // Set the size of the scanning box
+                    },
+                    (decodedText, decodedResult) => {
+                        // Handle the decoded result here
+                        currentCode = decodedText;
                         codeOutput.textContent = currentCode;
                         codeResult.classList.remove('hidden'); // Show code result
 
@@ -144,11 +151,13 @@
                         rejectBtn.disabled = false;
 
                         // Stop scanning after one scan
-                        codeReader.reset();
+                        html5QrCode.stop().catch(err => console.error("Stop scanning error: ", err));
+                    },
+                    (errorMessage) => {
+                        // Handle errors
+                        console.error("Scanning error: ", errorMessage);
                     }
-                } catch (err) {
-                    console.error("Camera initialization error or scanning error: ", err);
-                }
+                ).catch(err => console.error("Camera initialization error: ", err));
             }
 
             // Function to update the accepted code list
