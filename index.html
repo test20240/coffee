@@ -71,7 +71,7 @@
 </head>
 <body>
 
-    <h1>ZXing Barcode/QR Code Scannereee</h1>
+    <h1>ZXing Barcode/QR Code Scanner</h1>
 
     <!-- Camera window -->
     <div id="scanner-container">
@@ -143,22 +143,25 @@
             async function startScanner() {
                 try {
                     // Initialize ZXingBrowser
-                    codeReader = new ZXing.BrowserMultiFormatReader();
-                    const result = await codeReader.decodeFromVideoDevice(null, 'scanner');
-                    if (result) {
-                        currentCode = result.text;
-                        codeOutput.textContent = currentCode;
-                        codeResult.classList.remove('hidden'); // Show code result
+                    codeReader = new ZXingBrowser.BrowserMultiFormatReader();
+                    codeReader.decodeFromVideoDevice(null, 'scanner').then(result => {
+                        if (result) {
+                            currentCode = result.text;
+                            codeOutput.textContent = currentCode;
+                            codeResult.classList.remove('hidden'); // Show code result
 
-                        // Enable Accept and Reject buttons
-                        acceptBtn.disabled = false;
-                        rejectBtn.disabled = false;
+                            // Enable Accept and Reject buttons
+                            acceptBtn.disabled = false;
+                            rejectBtn.disabled = false;
 
-                        // Stop scanning after one scan
-                        codeReader.reset();
-                    }
+                            // Stop scanning after one scan
+                            codeReader.reset();
+                        }
+                    }).catch(err => {
+                        console.error("Scan error: ", err);
+                    });
                 } catch (err) {
-                    console.error("Camera initialization error or scanning error: ", err);
+                    console.error("Camera initialization error: ", err);
                 }
             }
 
