@@ -71,7 +71,7 @@
 </head>
 <body>
 
-    <h1>ZXing Barcode/QR Code Scanner</h1>
+    <h1>ZXing Barcode/QR Code Scannereee</h1>
 
     <!-- Camera window -->
     <div id="scanner-container">
@@ -142,7 +142,7 @@
             // Function to start the scanner
             async function startScanner() {
                 try {
-                    // Initialize ZXing BrowserMultiFormatReader
+                    // Initialize ZXingBrowser
                     codeReader = new ZXing.BrowserMultiFormatReader();
                     const result = await codeReader.decodeFromVideoDevice(null, 'scanner');
                     if (result) {
