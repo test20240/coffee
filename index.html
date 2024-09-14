@@ -105,6 +105,7 @@
         const codeReader = new ZXing.BrowserMultiFormatReader();
         let currentBarcode = null;
         let acceptedBarcodes = [];
+        let videoStream = null;
 
         document.addEventListener("DOMContentLoaded", function () {
             const scannerContainer = document.getElementById('scanner-container');
@@ -114,8 +115,7 @@
             const rejectBtn = document.getElementById('reject-btn');
             const newScanBtn = document.getElementById('new-scan-btn');
             const acceptedList = document.getElementById('accepted-list');
-
-            let videoStream = null;
+            const videoElement = document.getElementById('scanner');
 
             // Start the scanner when the "New Scan" button is clicked
             newScanBtn.addEventListener('click', function () {
@@ -148,11 +148,10 @@
                 navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
                     .then(stream => {
                         videoStream = stream;
-                        const video = document.getElementById('scanner');
-                        video.srcObject = stream;
-                        video.play();
+                        videoElement.srcObject = stream;
+                        videoElement.play();
                         
-                        codeReader.decodeOnceFromVideoElement(video)
+                        codeReader.decodeOnceFromVideoElement(videoElement)
                             .then(result => {
                                 currentBarcode = result.text;
                                 barcodeOutput.textContent = currentBarcode;
