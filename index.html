@@ -26,6 +26,9 @@
             border-radius: 8px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
             padding: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
 
         #reader {
@@ -33,6 +36,8 @@
             height: 200px; /* Fixed height for mobile */
             background-color: #e0e0e0; /* Placeholder for camera area */
             margin-bottom: 10px;
+            position: relative;
+            overflow: hidden;
         }
 
         .quantity-wrapper {
@@ -65,6 +70,9 @@
 
         .buttons {
             margin-top: 15px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
         }
 
         button {
@@ -77,6 +85,7 @@
             color: white;
             background-color: #28a745;
             transition: background-color 0.3s ease;
+            flex: 1;
         }
 
         button:hover {
@@ -115,6 +124,18 @@
             margin: 5px 0;
             padding: 10px;
             border-radius: 5px;
+        }
+
+        #accepted-list li span:first-child {
+            width: 75%;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        #accepted-list li span:last-child {
+            width: 25%;
+            text-align: right;
         }
 
         #scan-result {
@@ -214,7 +235,8 @@
                 console.error("Unable to start the QR code scanner:", err);
             });
 
-            // Show the stop button
+            // Show the stop button and hide new button
+            document.getElementById("new-btn").style.display = "none";
             document.getElementById("stop-btn").style.display = "inline-block";
         }
 
@@ -223,7 +245,8 @@
             if (html5QrCode) {
                 html5QrCode.stop().then(() => {
                     document.getElementById("reader").style.backgroundColor = "#e0e0e0"; // Reapply placeholder
-                    document.getElementById("stop-btn").style.display = "none"; // Hide the stop button
+                    document.getElementById("new-btn").style.display = "inline-block"; // Show new button
+                    document.getElementById("stop-btn").style.display = "none"; // Hide stop button
                 }).catch(err => {
                     console.error("Unable to stop the QR code scanner:", err);
                 });
@@ -243,10 +266,10 @@
 
         // Accept button event listener
         document.getElementById("accept-btn").addEventListener("click", () => {
-            const quantity = document.getElementById("quantity-input").value;
-            if (currentScanData && quantity) {
-                acceptedScans.unshift({ text: currentScanData, quantity: quantity }); // Add new scan at the top
-                updateAcceptedList();
+            if (currentScanData) {
+                const quantity = document.getElementById("quantity-input").value;
+                acceptedScans.push({ text: currentScanData, quantity: quantity }); // Add scan to list
+                updateAcceptedList(); // Refresh list
                 currentScanData = null;
                 document.getElementById("scan-result").textContent = ""; // Clear scan result
                 document.getElementById("quantity-input").value = "1"; // Reset quantity to 1
