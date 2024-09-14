@@ -47,7 +47,7 @@
 </head>
 <body>
     <div class="container">
-        <div id="reader" style="width: 100%;"></div>
+        <div id="reader" style="width: 100%; display: none;"></div>
         <div class="buttons">
             <button id="accept-btn">Accept</button>
             <button id="reject-btn">Reject</button>
@@ -59,50 +59,38 @@
     <script>
         let currentScanData = null;
         let acceptedScans = [];
+        let html5QrCode = null;
+        
+        // Function to initialize the QR code scanner
+        function initializeScanner() {
+            html5QrCode = new Html5Qrcode("reader");
+        }
 
-        // Initialize QR code scanner
-        const html5QrCode = new Html5Qrcode("reader");
-
+        // Function to start the QR code scanner
         function startScanner() {
-            html5QrCode.start({ facingMode: "environment" }, { fps: 10 }, qrCodeMessage => {
+            const qrCodeSuccessCallback = (qrCodeMessage) => {
                 // Handle QR code scan
                 currentScanData = qrCodeMessage;
-            }).catch(err => {
+                console.log("QR Code scanned: ", qrCodeMessage); // For debugging
+            };
+            const config = { facingMode: "environment" };
+            const qrCodeConfig = { fps: 10 };
+
+            html5QrCode.start(config, qrCodeConfig, qrCodeSuccessCallback).catch(err => {
                 console.error("Unable to start the QR code scanner:", err);
             });
         }
 
-        // Stop QR code scanner
+        // Function to stop the QR code scanner
         function stopScanner() {
-            html5QrCode.stop().catch(err => {
-                console.error("Unable to stop the QR code scanner:", err);
-            });
+            if (html5QrCode) {
+                html5QrCode.stop().catch(err => {
+                    console.error("Unable to stop the QR code scanner:", err);
+                });
+            }
         }
 
-        // Accept scan data
-        document.getElementById("accept-btn").addEventListener("click", () => {
-            if (currentScanData) {
-                acceptedScans.push(currentScanData);
-                updateAcceptedList();
-                currentScanData = null;
-                stopScanner();
-            } else {
-                alert("No QR code scanned yet!");
-            }
-        });
-
-        // Reject scan data
-        document.getElementById("reject-btn").addEventListener("click", () => {
-            currentScanData = null;
-            stopScanner();
-        });
-
-        // Start a new scan
-        document.getElementById("new-btn").addEventListener("click", () => {
-            startScanner();
-        });
-
-        // Update the list of accepted scans
+        // Function to update the list of accepted scans
         function updateAcceptedList() {
             const list = document.getElementById("accepted-list");
             list.innerHTML = ""; // Clear current list
@@ -113,8 +101,39 @@
             });
         }
 
-        // Start the scanner when the page loads
-        window.onload = startScanner;
+        // Event listener for the Accept button
+        document.getElementById("accept-btn").addEventListener("click", () => {
+            if (currentScanData) {
+                acceptedScans.push(currentScanData);
+                updateAcceptedList();
+                currentScanData = null;
+                stopScanner();
+                document.getElementById("reader").style.display = "none"; // Hide the scanner
+            } else {
+                alert("No QR code scanned yet!");
+            }
+        });
+
+        // Event listener for the Reject button
+        document.getElementById("reject-btn").addEventListener("click", () => {
+            currentScanData = null;
+            stopScanner();
+            document.getElementById("reader").style.display = "none"; // Hide the scanner
+        });
+
+        // Event listener for the New button
+        document.getElementById("new-btn").addEventListener("click", () => {
+            if (html5QrCode === null) {
+                initializeScanner(); // Initialize the scanner if not already done
+            }
+            document.getElementById("reader").style.display = "block"; // Show the scanner
+            startScanner(); // Start scanning
+        });
+
+        // Initialize the QR code scanner on page load
+        window.onload = () => {
+            initializeScanner();
+        };
     </script>
 </body>
 </html>
