@@ -16,7 +16,10 @@
             background-color: #f0f0f0;
         }
         #camera {
-            display: none;
+            width: 300px;
+            height: 200px;
+            border: 1px solid #ccc;
+            margin-top: 20px;
         }
         #buttons {
             margin-top: 20px;
@@ -36,8 +39,7 @@
     </style>
 </head>
 <body>
-    <p>qr code scanner</p>
-    <video id="camera" width="300" height="200"></video>
+    <div id="camera"></div>
     <div id="buttons">
         <button id="accept">Accept</button>
         <button id="reject">Reject</button>
@@ -45,60 +47,63 @@
     </div>
     <div id="accepted-reads"></div>
 
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const camera = document.getElementById('camera');
+            const cameraElement = document.getElementById('camera');
             const acceptButton = document.getElementById('accept');
             const rejectButton = document.getElementById('reject');
             const newButton = document.getElementById('new');
             const acceptedReadsDiv = document.getElementById('accepted-reads');
             
             let currentScanResult = null;
-            let videoStream = null;
-            let canvas = document.createElement('canvas');
-            let context = canvas.getContext('2d');
+            let html5QrCode = null;
 
             function startCamera() {
-                navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-                    .then(stream => {
-                        videoStream = stream;
-                        camera.srcObject = stream;
-                        camera.style.display = 'block';
-                        camera.play();
-                        requestAnimationFrame(scanQRCode);
-                    })
-                    .catch(err => console.error('Error accessing camera:', err));
-            }
-
-            function scanQRCode() {
-                if (camera.videoWidth > 0 && camera.videoHeight > 0) {
-                    canvas.width = camera.videoWidth;
-                    canvas.height = camera.videoHeight;
-                    context.drawImage(camera, 0, 0, canvas.width, canvas.height);
-                    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-                    const code = jsQR(imageData.data, canvas.width, canvas.height, {
-                        inversionAttempts: 'dontInvert',
-                    });
-
-                    if (code) {
-                        currentScanResult = code.data;
-                        stopCamera();
-                    } else {
-                        requestAnimationFrame(scanQRCode);
-                    }
+                if (html5QrCode) {
+                    html5QrCode.stop().then(() => {
+                        html5QrCode = new Html5Qrcode("camera");
+                        html5QrCode.start(
+                            { facingMode: "environment" },
+                            {
+                                fps: 10,
+                                qrbox: 250
+                            },
+                            (decodedText, decodedResult) => {
+                                currentScanResult = decodedText;
+                                stopCamera();
+                            },
+                            (errorMessage) => {
+                                console.error(errorMessage);
+                            }
+                        );
+                    }).catch(err => console.error('Error stopping camera:', err));
                 } else {
-                    requestAnimationFrame(scanQRCode);
+                    html5QrCode = new Html5Qrcode("camera");
+                    html5QrCode.start(
+                        { facingMode: "environment" },
+                        {
+                            fps: 10,
+                            qrbox: 250
+                        },
+                        (decodedText, decodedResult) => {
+                            currentScanResult = decodedText;
+                            stopCamera();
+                        },
+                        (errorMessage) => {
+                            console.error(errorMessage);
+                        }
+                    );
                 }
             }
 
             function stopCamera() {
-                if (videoStream) {
-                    const tracks = videoStream.getTracks();
-                    tracks.forEach(track => track.stop());
-                    videoStream = null;
+                if (html5QrCode) {
+                    html5QrCode.stop().then(() => {
+                        cameraElement.innerHTML = "";
+                        html5QrCode = null;
+                    }).catch(err => console.error('Error stopping camera:', err));
                 }
-                camera.style.display = 'none';
             }
 
             function addAcceptedRead(content) {
