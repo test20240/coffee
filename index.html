@@ -4,48 +4,41 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ZXing Barcode/QR Code Scanner</title>
-    <!-- Correct ZXing library -->
+    <!-- ZXingBrowser library -->
     <script src="https://unpkg.com/@zxing/browser@latest"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
         }
-
         h1 {
             text-align: center;
         }
-
         #scanner-container {
             display: none;
             width: 100%;
             max-width: 600px;
             margin: 20px auto;
         }
-
         #scanner {
             width: 100%;
             max-height: 30vh;
             border: 1px solid #ccc;
         }
-
         #code-result {
             text-align: center;
             font-size: 18px;
             margin: 20px;
         }
-
         #controls {
             text-align: center;
             margin-top: 20px;
         }
-
         #controls button {
             padding: 10px 20px;
             margin: 10px;
             font-size: 16px;
             cursor: pointer;
         }
-
         #accepted-list {
             width: 100%;
             max-width: 600px;
@@ -53,17 +46,14 @@
             border-collapse: collapse;
             border: 1px solid #ccc;
         }
-
         #accepted-list th, #accepted-list td {
             border: 1px solid #ccc;
             padding: 10px;
             text-align: center;
         }
-
         #accepted-list th {
             background-color: #f4f4f4;
         }
-
         .hidden {
             display: none;
         }
@@ -71,7 +61,7 @@
 </head>
 <body>
 
-    <h1>ZXing Barcode/QR Code Scanner</h1>
+    <h1>ZXing Barcode/QR Code Scannereeeeeeee</h1>
 
     <!-- Camera window -->
     <div id="scanner-container">
@@ -142,26 +132,22 @@
             // Function to start the scanner
             async function startScanner() {
                 try {
-                    // Initialize ZXingBrowser
-                    codeReader = new ZXingBrowser.BrowserMultiFormatReader();
-                    codeReader.decodeFromVideoDevice(null, 'scanner').then(result => {
-                        if (result) {
-                            currentCode = result.text;
-                            codeOutput.textContent = currentCode;
-                            codeResult.classList.remove('hidden'); // Show code result
+                    codeReader = new ZXing.BrowserMultiFormatReader();
+                    const result = await codeReader.decodeFromVideoDevice(null, 'scanner');
+                    if (result) {
+                        currentCode = result.text;
+                        codeOutput.textContent = currentCode;
+                        codeResult.classList.remove('hidden'); // Show code result
 
-                            // Enable Accept and Reject buttons
-                            acceptBtn.disabled = false;
-                            rejectBtn.disabled = false;
+                        // Enable Accept and Reject buttons
+                        acceptBtn.disabled = false;
+                        rejectBtn.disabled = false;
 
-                            // Stop scanning after one scan
-                            codeReader.reset();
-                        }
-                    }).catch(err => {
-                        console.error("Scan error: ", err);
-                    });
+                        // Stop scanning after one scan
+                        codeReader.reset();
+                    }
                 } catch (err) {
-                    console.error("Camera initialization error: ", err);
+                    console.error("Camera initialization error or scanning error: ", err);
                 }
             }
 
