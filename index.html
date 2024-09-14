@@ -60,19 +60,19 @@
         let currentScanData = null;
         let acceptedScans = [];
         let html5QrCode = null;
-        
-        // Function to initialize the QR code scanner
+
+        // Initialize QR code scanner
         function initializeScanner() {
             html5QrCode = new Html5Qrcode("reader");
         }
 
-        // Function to start the QR code scanner
+        // Start QR code scanner
         function startScanner() {
             const qrCodeSuccessCallback = (qrCodeMessage) => {
-                // Handle QR code scan
                 currentScanData = qrCodeMessage;
-                console.log("QR Code scanned: ", qrCodeMessage); // For debugging
+                console.log("QR Code scanned: ", qrCodeMessage); // Debugging
             };
+
             const config = { facingMode: "environment" };
             const qrCodeConfig = { fps: 10 };
 
@@ -81,7 +81,7 @@
             });
         }
 
-        // Function to stop the QR code scanner
+        // Stop QR code scanner
         function stopScanner() {
             if (html5QrCode) {
                 html5QrCode.stop().catch(err => {
@@ -90,7 +90,7 @@
             }
         }
 
-        // Function to update the list of accepted scans
+        // Update the list of accepted scans
         function updateAcceptedList() {
             const list = document.getElementById("accepted-list");
             list.innerHTML = ""; // Clear current list
@@ -101,32 +101,32 @@
             });
         }
 
-        // Event listener for the Accept button
+        // Accept button event listener
         document.getElementById("accept-btn").addEventListener("click", () => {
             if (currentScanData) {
                 acceptedScans.push(currentScanData);
                 updateAcceptedList();
                 currentScanData = null;
                 stopScanner();
-                document.getElementById("reader").style.display = "none"; // Hide the scanner
+                document.getElementById("reader").style.display = "none"; // Hide the camera
             } else {
                 alert("No QR code scanned yet!");
             }
         });
 
-        // Event listener for the Reject button
+        // Reject button event listener
         document.getElementById("reject-btn").addEventListener("click", () => {
             currentScanData = null;
             stopScanner();
-            document.getElementById("reader").style.display = "none"; // Hide the scanner
+            document.getElementById("reader").style.display = "none"; // Hide the camera
         });
 
-        // Event listener for the New button
+        // New button event listener
         document.getElementById("new-btn").addEventListener("click", () => {
-            if (html5QrCode === null) {
+            if (!html5QrCode) {
                 initializeScanner(); // Initialize the scanner if not already done
             }
-            document.getElementById("reader").style.display = "block"; // Show the scanner
+            document.getElementById("reader").style.display = "block"; // Show the camera
             startScanner(); // Start scanning
         });
 
