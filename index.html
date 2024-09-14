@@ -71,7 +71,7 @@
 </head>
 <body>
 
-    <h1>ZXing Barcode/QR Code Scanner</h1>
+    <h1>ZXing Barcode/QR Code Scannereee</h1>
 
     <!-- Camera window -->
     <div id="scanner-container">
@@ -103,10 +103,6 @@
     </table>
 
     <script>
-        let codeReader;
-        let currentCode = null;
-        let acceptedCodes = [];
-
         document.addEventListener("DOMContentLoaded", function () {
             const scannerContainer = document.getElementById('scanner-container');
             const codeResult = document.getElementById('code-result');
@@ -115,6 +111,10 @@
             const rejectBtn = document.getElementById('reject-btn');
             const newScanBtn = document.getElementById('new-scan-btn');
             const acceptedList = document.getElementById('accepted-list');
+
+            let codeReader;
+            let currentCode = null;
+            let acceptedCodes = [];
 
             // Start the scanner when the "New Scan" button is clicked
             newScanBtn.addEventListener('click', function () {
@@ -140,25 +140,29 @@
             });
 
             // Function to start the scanner
-            function startScanner() {
-                codeReader = new ZXing.BrowserMultiFormatReader();
-                codeReader.decodeFromVideoDevice(null, 'scanner', (result, error) => {
-                    if (result) {
-                        currentCode = result.text;
-                        codeOutput.textContent = currentCode;
-                        codeResult.classList.remove('hidden'); // Show code result
+            async function startScanner() {
+                try {
+                    codeReader = new ZXing.BrowserMultiFormatReader();
+                    await codeReader.decodeFromVideoDevice(null, 'scanner', (result, error) => {
+                        if (result) {
+                            currentCode = result.text;
+                            codeOutput.textContent = currentCode;
+                            codeResult.classList.remove('hidden'); // Show code result
 
-                        // Enable Accept and Reject buttons
-                        acceptBtn.disabled = false;
-                        rejectBtn.disabled = false;
+                            // Enable Accept and Reject buttons
+                            acceptBtn.disabled = false;
+                            rejectBtn.disabled = false;
 
-                        // Stop scanning after one scan
-                        codeReader.reset();
-                    }
-                    if (error) {
-                        console.error("Scan error: ", error);
-                    }
-                }).catch(err => console.error("Camera initialization error: ", err));
+                            // Stop scanning after one scan
+                            codeReader.reset();
+                        }
+                        if (error) {
+                            console.error("Scan error: ", error);
+                        }
+                    });
+                } catch (err) {
+                    console.error("Camera initialization error: ", err);
+                }
             }
 
             // Function to update the accepted code list
