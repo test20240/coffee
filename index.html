@@ -3,131 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Code Reader</title>
+    <title>QR Code Scanner</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
             display: flex;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             height: 100vh;
             margin: 0;
-            background-color: #f0f0f0;
+            background-color: #f4f4f4;
         }
-        #camera {
-            width: 300px;
-            height: 200px;
-            border: 1px solid #ccc;
+
+        .container {
+            text-align: center;
+        }
+
+        .buttons {
             margin-top: 20px;
         }
-        #buttons {
-            margin-top: 20px;
+
+        button {
+            margin: 5px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
         }
-        #accepted-reads {
+
+        #accepted-list {
             margin-top: 20px;
-            max-height: 200px;
-            overflow-y: auto;
-            border: 1px solid #ccc;
-            padding: 10px;
-            width: 300px;
-            background: #fff;
+            list-style-type: none;
+            padding: 0;
         }
-        .accepted-item {
+
+        #accepted-list li {
+            background-color: #e0e0e0;
             margin: 5px 0;
+            padding: 10px;
+            border-radius: 5px;
         }
     </style>
 </head>
 <body>
-    <div id="camera"></div>
-    <div id="buttons">
-        <button id="accept">Accept</button>
-        <button id="reject">Reject</button>
-        <button id="new">New Scan</button>
+    <div class="container">
+        <div id="reader" style="width: 100%;"></div>
+        <div class="buttons">
+            <button id="accept-btn">Accept</button>
+            <button id="reject-btn">Reject</button>
+            <button id="new-btn">New</button>
+        </div>
+        <ul id="accepted-list"></ul>
     </div>
-    <div id="accepted-reads"></div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const cameraElement = document.getElementById('camera');
-            const acceptButton = document.getElementById('accept');
-            const rejectButton = document.getElementById('reject');
-            const newButton = document.getElementById('new');
-            const acceptedReadsDiv = document.getElementById('accepted-reads');
-            
-            let currentScanResult = null;
-            let html5QrCode = null;
+        let currentScanData = null;
+        let acceptedScans = [];
 
-            function startCamera() {
-                if (html5QrCode) {
-                    html5QrCode.stop().then(() => {
-                        html5QrCode = new Html5Qrcode("camera");
-                        html5QrCode.start(
-                            { facingMode: "environment" },
-                            {
-                                fps: 10,
-                                qrbox: 250
-                            },
-                            (decodedText, decodedResult) => {
-                                currentScanResult = decodedText;
-                                stopCamera();
-                            },
-                            (errorMessage) => {
-                                console.error(errorMessage);
-                            }
-                        );
-                    }).catch(err => console.error('Error stopping camera:', err));
-                } else {
-                    html5QrCode = new Html5Qrcode("camera");
-                    html5QrCode.start(
-                        { facingMode: "environment" },
-                        {
-                            fps: 10,
-                            qrbox: 250
-                        },
-                        (decodedText, decodedResult) => {
-                            currentScanResult = decodedText;
-                            stopCamera();
-                        },
-                        (errorMessage) => {
-                            console.error(errorMessage);
-                        }
-                    );
-                }
-            }
+        // Initialize QR code scanner
+        const html5QrCode = new Html5Qrcode("reader");
 
-            function stopCamera() {
-                if (html5QrCode) {
-                    html5QrCode.stop().then(() => {
-                        cameraElement.innerHTML = "";
-                        html5QrCode = null;
-                    }).catch(err => console.error('Error stopping camera:', err));
-                }
-            }
-
-            function addAcceptedRead(content) {
-                const item = document.createElement('div');
-                item.className = 'accepted-item';
-                item.textContent = content;
-                acceptedReadsDiv.appendChild(item);
-            }
-
-            acceptButton.addEventListener('click', () => {
-                if (currentScanResult) {
-                    addAcceptedRead(currentScanResult);
-                    currentScanResult = null;
-                }
+        function startScanner() {
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10 }, qrCodeMessage => {
+                // Handle QR code scan
+                currentScanData = qrCodeMessage;
+            }).catch(err => {
+                console.error("Unable to start the QR code scanner:", err);
             });
+        }
 
-            rejectButton.addEventListener('click', () => {
-                currentScanResult = null;
+        // Stop QR code scanner
+        function stopScanner() {
+            html5QrCode.stop().catch(err => {
+                console.error("Unable to stop the QR code scanner:", err);
             });
+        }
 
-            newButton.addEventListener('click', () => {
-                startCamera();
-            });
+        // Accept scan data
+        document.getElementById("accept-btn").addEventListener("click", () => {
+            if (currentScanData) {
+                acceptedScans.push(currentScanData);
+                updateAcceptedList();
+                currentScanData = null;
+                stopScanner();
+            } else {
+                alert("No QR code scanned yet!");
+            }
         });
+
+        // Reject scan data
+        document.getElementById("reject-btn").addEventListener("click", () => {
+            currentScanData = null;
+            stopScanner();
+        });
+
+        // Start a new scan
+        document.getElementById("new-btn").addEventListener("click", () => {
+            startScanner();
+        });
+
+        // Update the list of accepted scans
+        function updateAcceptedList() {
+            const list = document.getElementById("accepted-list");
+            list.innerHTML = ""; // Clear current list
+            acceptedScans.forEach(scan => {
+                const listItem = document.createElement("li");
+                listItem.textContent = scan;
+                list.appendChild(listItem);
+            });
+        }
+
+        // Start the scanner when the page loads
+        window.onload = startScanner;
     </script>
 </body>
 </html>
