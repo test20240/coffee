@@ -3,189 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HTML5 QR Code and Barcode Scanner</title>
-    <!-- HTML5 QR Code library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+    <title>QR Code Reader</title>
     <style>
         body {
             font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
         }
-        h1 {
-            text-align: center;
-        }
-        #scanner-container {
+        #camera {
             display: none;
-            width: 100%;
-            max-width: 600px;
-            margin: 20px auto;
         }
-        #scanner {
-            width: 100%;
-            max-height: 30vh;
-            border: 1px solid #ccc;
-        }
-        #code-result {
-            text-align: center;
-            font-size: 18px;
-            margin: 20px;
-        }
-        #controls {
-            text-align: center;
+        #buttons {
             margin-top: 20px;
         }
-        #controls button {
-            padding: 10px 20px;
-            margin: 10px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        #accepted-list {
-            width: 100%;
-            max-width: 600px;
-            margin: 20px auto;
-            border-collapse: collapse;
-            border: 1px solid #ccc;
-        }
-        #accepted-list th, #accepted-list td {
+        #accepted-reads {
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
             border: 1px solid #ccc;
             padding: 10px;
-            text-align: center;
+            width: 300px;
+            background: #fff;
         }
-        #accepted-list th {
-            background-color: #f4f4f4;
-        }
-        .hidden {
-            display: none;
+        .accepted-item {
+            margin: 5px 0;
         }
     </style>
 </head>
 <body>
-
-    <h1>HTML5 QR Code and Barcode Scannereeee</h1>
-
-    <!-- Camera window -->
-    <div id="scanner-container">
-        <div id="scanner"></div>
+    <video id="camera" width="300" height="200"></video>
+    <div id="buttons">
+        <button id="accept">Accept</button>
+        <button id="reject">Reject</button>
+        <button id="new">New Scan</button>
     </div>
+    <div id="accepted-reads"></div>
 
-    <!-- Code result display -->
-    <div id="code-result" class="hidden">
-        Scanned Code: <span id="code-output">Waiting for scan...</span>
-    </div>
-
-    <!-- Control buttons -->
-    <div id="controls">
-        <button id="new-scan-btn">New Scan</button>
-        <button id="accept-btn" disabled>Accept</button>
-        <button id="reject-btn" disabled>Reject</button>
-    </div>
-
-    <!-- List of accepted codes -->
-    <table id="accepted-list" class="hidden">
-        <thead>
-            <tr>
-                <th>Accepted Code</th>
-            </tr>
-        </thead>
-        <tbody>
-            <!-- List will be populated here -->
-        </tbody>
-    </table>
-
+    <script src="https://cdn.jsdelivr.net/npm/instascan@1.0.0/instascan.min.js"></script>
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const scannerContainer = document.getElementById('scanner-container');
-            const codeResult = document.getElementById('code-result');
-            const codeOutput = document.getElementById('code-output');
-            const acceptBtn = document.getElementById('accept-btn');
-            const rejectBtn = document.getElementById('reject-btn');
-            const newScanBtn = document.getElementById('new-scan-btn');
-            const acceptedList = document.getElementById('accepted-list');
+        document.addEventListener('DOMContentLoaded', () => {
+            const camera = document.getElementById('camera');
+            const acceptButton = document.getElementById('accept');
+            const rejectButton = document.getElementById('reject');
+            const newButton = document.getElementById('new');
+            const acceptedReadsDiv = document.getElementById('accepted-reads');
+            
+            let currentScanResult = null;
+            let scanner = null;
 
-            let html5QrCode;
-            let currentCode = null;
-            let acceptedCodes = [];
+            function startCamera() {
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+                    .then(stream => {
+                        camera.srcObject = stream;
+                        camera.style.display = 'block';
+                        camera.play();
+                        initializeScanner();
+                    })
+                    .catch(err => console.error('Error accessing camera:', err));
+            }
 
-            // Initialize the scanner when the "New Scan" button is clicked
-            newScanBtn.addEventListener('click', () => {
-                startScanner();
-                scannerContainer.style.display = 'block'; // Show the scanner
-                codeResult.classList.add('hidden'); // Hide code result
-                acceptBtn.disabled = true;
-                rejectBtn.disabled = true;
-            });
+            function initializeScanner() {
+                scanner = new Instascan.Scanner({ video: camera });
+                scanner.addListener('scan', content => {
+                    currentScanResult = content;
+                    stopCamera();
+                });
+                Instascan.Camera.getCameras().then(cameras => {
+                    if (cameras.length > 0) {
+                        scanner.start(cameras[0]);
+                    } else {
+                        console.error('No cameras found.');
+                    }
+                }).catch(err => console.error('Error getting cameras:', err));
+            }
 
-            // Accept button logic
-            acceptBtn.addEventListener('click', () => {
-                if (currentCode) {
-                    acceptedCodes.push(currentCode);
-                    updateAcceptedList();
-                    clearCodeResult();
+            function stopCamera() {
+                if (camera.srcObject) {
+                    const stream = camera.srcObject;
+                    const tracks = stream.getTracks();
+                    tracks.forEach(track => track.stop());
+                    camera.srcObject = null;
+                }
+                camera.style.display = 'none';
+            }
+
+            function addAcceptedRead(content) {
+                const item = document.createElement('div');
+                item.className = 'accepted-item';
+                item.textContent = content;
+                acceptedReadsDiv.appendChild(item);
+            }
+
+            acceptButton.addEventListener('click', () => {
+                if (currentScanResult) {
+                    addAcceptedRead(currentScanResult);
+                    currentScanResult = null;
                 }
             });
 
-            // Reject button logic
-            rejectBtn.addEventListener('click', () => {
-                clearCodeResult();
+            rejectButton.addEventListener('click', () => {
+                currentScanResult = null;
             });
 
-            // Function to start the scanner
-            function startScanner() {
-                // Initialize HTML5 QR Code
-                html5QrCode = new Html5Qrcode("scanner");
+            newButton.addEventListener('click', () => {
+                startCamera();
+            });
 
-                html5QrCode.start(
-                    { facingMode: "environment" }, // Use environment facing mode
-                    {
-                        fps: 10,    // Set the frame rate
-                        qrbox: { width: 250, height: 250 } // Set the size of the scanning box
-                    },
-                    (decodedText, decodedResult) => {
-                        // Handle the decoded result here
-                        currentCode = decodedText;
-                        codeOutput.textContent = currentCode;
-                        codeResult.classList.remove('hidden'); // Show code result
-
-                        // Enable Accept and Reject buttons
-                        acceptBtn.disabled = false;
-                        rejectBtn.disabled = false;
-
-                        // Stop scanning after one scan
-                        html5QrCode.stop().catch(err => console.error("Stop scanning error: ", err));
-                    },
-                    (errorMessage) => {
-                        // Handle errors
-                        console.error("Scanning error: ", errorMessage);
-                    }
-                ).catch(err => console.error("Camera initialization error: ", err));
-            }
-
-            // Function to update the accepted code list
-            function updateAcceptedList() {
-                const tbody = acceptedList.querySelector('tbody');
-                tbody.innerHTML = ''; // Clear current list
-
-                acceptedCodes.forEach(code => {
-                    const row = document.createElement('tr');
-                    const cell = document.createElement('td');
-                    cell.textContent = code;
-                    row.appendChild(cell);
-                    tbody.appendChild(row);
-                });
-
-                acceptedList.classList.remove('hidden'); // Show the accepted code list
-            }
-
-            // Function to clear the displayed code result
-            function clearCodeResult() {
-                currentCode = null;
-                codeOutput.textContent = "Waiting for scan...";
-                codeResult.classList.add('hidden'); // Hide code result
-                acceptBtn.disabled = true;
-                rejectBtn.disabled = true;
-            }
+            // Start the camera on page load
+            startCamera();
         });
     </script>
-
 </body>
 </html>
