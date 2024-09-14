@@ -3,74 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QuaggaJS Barcode Scanner</title>
-    <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2/dist/quagga.min.js"></script>
+    <title>Barcode Scanner</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
+        #scanner-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin: auto;
         }
-        #camera {
-            width: 500px;
-            height: 400px;
-            border: 1px solid black;
+
+        #scanner {
+            width: 100%;
+            height: auto;
+            border: 1px solid #ccc;
         }
-        #result {
+
+        #barcode-result {
+            text-align: center;
             margin-top: 20px;
+            font-size: 18px;
         }
-        #confirm {
-            margin-top: 10px;
-            display: none;
+
+        h1 {
+            text-align: center;
         }
     </style>
 </head>
 <body>
-    <h1>QuaggaJS Barcode Scanner</h1>
-    <div id="camera"></div>
-    <div id="result"></div>
-    <button id="confirm">Confirm Barcode</button>
+
+    <h1>Barcode Scanner</h1>
+
+    <div id="scanner-container">
+        <div id="scanner"></div> <!-- This is where the camera feed will be displayed -->
+    </div>
+
+    <div id="barcode-result">
+        <h3>Scanned Barcode: <span id="barcode-output">Waiting for scan...</span></h3>
+    </div>
+
     <script>
-        const scannedBarcodes = [];
-        let currentCode = null;
-
-        function onDetected(result) {
-            const code = result.codeResult.code;
-            console.log(`Code scanned = ${code}`);
-            currentCode = code;
-            document.getElementById('result').innerText = `Scanned: ${code}`;
-            document.getElementById('confirm').style.display = 'block';
-        }
-
-        document.getElementById('confirm').addEventListener('click', () => {
-            if (currentCode) {
-                scannedBarcodes.push(currentCode);
-                document.getElementById('result').innerText += `\nConfirmed: ${currentCode}`;
-                document.getElementById('confirm').style.display = 'none';
-                currentCode = null;
-            }
-        });
-
-        Quagga.init({
-            inputStream: {
-                name: "Live",
-                type: "LiveStream",
-                target: document.querySelector('#camera'),
-                constraints: {
-                    facingMode: "environment"
+        document.addEventListener("DOMContentLoaded", function () {
+            // Initialize QuaggaJS
+            Quagga.init({
+                inputStream: {
+                    name: "Live",
+                    type: "LiveStream",
+                    target: document.querySelector('#scanner'), // This is where the camera will be shown
+                    constraints: {
+                        width: 640,
+                        height: 480,
+                        facingMode: "environment" // Use the back camera
+                    }
                 },
-            },
-            decoder: {
-                readers: ["code_128_reader"]
-            },
-        }, function (err) {
-            if (err) {
-                console.log(err);
-                return;
-            }
-            console.log("Initialization finished. Ready to start");
-            Quagga.start();
-        });
+                decoder: {
+                    readers: ["code_128_reader", "ean_reader", "ean_8_reader", "code_39_reader"] // Barcode formats to support
+                }
+            }, function (err) {
+                if (err) {
+                    console.error(err);
+                    return;
+                }
+                console.log("QuaggaJS initialized and starting...");
+                Quagga.start(); // Start the camera stream
+            });
 
-        Quagga.onDetected(onDetected);
+            // Listen for barcode detection
+            Quagga.onDetected(function (result) {
+                let barcode = result.codeResult.code;
+                document.getElementById('barcode-output').textContent = barcode; // Display the barcode
+                console.log("Detected barcode: " + barcode);
+            });
+        });
     </script>
+
 </body>
 </html>
