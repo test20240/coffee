@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ZXing Barcode/QR Code Scanner</title>
-    <!-- ZXingBrowser library -->
+    <!-- Correct ZXingBrowser library -->
     <script src="https://unpkg.com/@zxing/browser@latest"></script>
     <style>
         body {
@@ -61,7 +61,7 @@
 </head>
 <body>
 
-    <h1>ZXing Barcode/QR Code Scannereeeeeeee</h1>
+    <h1>ZXing Barcode/QR Code Scanner</h1>
 
     <!-- Camera window -->
     <div id="scanner-container">
@@ -93,7 +93,7 @@
     </table>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
+        window.addEventListener('load', () => {
             const scannerContainer = document.getElementById('scanner-container');
             const codeResult = document.getElementById('code-result');
             const codeOutput = document.getElementById('code-output');
@@ -107,7 +107,7 @@
             let acceptedCodes = [];
 
             // Start the scanner when the "New Scan" button is clicked
-            newScanBtn.addEventListener('click', function () {
+            newScanBtn.addEventListener('click', () => {
                 startScanner();
                 scannerContainer.style.display = 'block'; // Show the scanner
                 codeResult.classList.add('hidden'); // Hide code result
@@ -116,7 +116,7 @@
             });
 
             // Accept button logic
-            acceptBtn.addEventListener('click', function () {
+            acceptBtn.addEventListener('click', () => {
                 if (currentCode) {
                     acceptedCodes.push(currentCode);
                     updateAcceptedList();
@@ -125,14 +125,14 @@
             });
 
             // Reject button logic
-            rejectBtn.addEventListener('click', function () {
+            rejectBtn.addEventListener('click', () => {
                 clearCodeResult();
             });
 
             // Function to start the scanner
             async function startScanner() {
                 try {
-                    codeReader = new ZXing.BrowserMultiFormatReader();
+                    codeReader = new ZXingBrowser.BrowserQRCodeReader();
                     const result = await codeReader.decodeFromVideoDevice(null, 'scanner');
                     if (result) {
                         currentCode = result.text;
