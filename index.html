@@ -44,7 +44,7 @@
     </div>
     <div id="accepted-reads"></div>
 
-    <script src="https://cdn.jsdelivr.net/npm/instascan@1.0.0/instascan.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const camera = document.getElementById('camera');
@@ -54,40 +54,48 @@
             const acceptedReadsDiv = document.getElementById('accepted-reads');
             
             let currentScanResult = null;
-            let scanner = null;
+            let videoStream = null;
+            let canvas = document.createElement('canvas');
+            let context = canvas.getContext('2d');
 
             function startCamera() {
                 navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
                     .then(stream => {
+                        videoStream = stream;
                         camera.srcObject = stream;
                         camera.style.display = 'block';
                         camera.play();
-                        initializeScanner();
+                        requestAnimationFrame(scanQRCode);
                     })
                     .catch(err => console.error('Error accessing camera:', err));
             }
 
-            function initializeScanner() {
-                scanner = new Instascan.Scanner({ video: camera });
-                scanner.addListener('scan', content => {
-                    currentScanResult = content;
-                    stopCamera();
-                });
-                Instascan.Camera.getCameras().then(cameras => {
-                    if (cameras.length > 0) {
-                        scanner.start(cameras[0]);
+            function scanQRCode() {
+                if (camera.videoWidth > 0 && camera.videoHeight > 0) {
+                    canvas.width = camera.videoWidth;
+                    canvas.height = camera.videoHeight;
+                    context.drawImage(camera, 0, 0, canvas.width, canvas.height);
+                    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                    const code = jsQR(imageData.data, canvas.width, canvas.height, {
+                        inversionAttempts: 'dontInvert',
+                    });
+
+                    if (code) {
+                        currentScanResult = code.data;
+                        stopCamera();
                     } else {
-                        console.error('No cameras found.');
+                        requestAnimationFrame(scanQRCode);
                     }
-                }).catch(err => console.error('Error getting cameras:', err));
+                } else {
+                    requestAnimationFrame(scanQRCode);
+                }
             }
 
             function stopCamera() {
-                if (camera.srcObject) {
-                    const stream = camera.srcObject;
-                    const tracks = stream.getTracks();
+                if (videoStream) {
+                    const tracks = videoStream.getTracks();
                     tracks.forEach(track => track.stop());
-                    camera.srcObject = null;
+                    videoStream = null;
                 }
                 camera.style.display = 'none';
             }
