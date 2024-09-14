@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>QR Code Scanner</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <style>
@@ -11,39 +11,40 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100dvh;
+            height: 100vh;
             margin: 0;
             background-color: #f0f0f0;
+            padding: 10px;
+            box-sizing: border-box;
         }
 
         .container {
             text-align: center;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
+            width: 100%;
+            max-width: 500px;
             background-color: #ffffff;
             border-radius: 8px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            padding: 10px;
         }
 
         #reader {
-            width: 90%;
-            max-width: 400px;
-            height: 300px; /* Fixed height */
-            margin: 0 auto;
+            width: 100%;
+            height: 200px; /* Fixed height for mobile */
             background-color: #e0e0e0; /* Placeholder for camera area */
+            margin-bottom: 10px;
         }
 
         .quantity-wrapper {
             display: flex;
             justify-content: center;
             align-items: center;
-            margin-top: 15px;
+            margin-top: 10px;
         }
 
         .quantity-wrapper button {
-            padding: 15px;
-            font-size: 20px;
+            padding: 10px;
+            font-size: 18px;
             cursor: pointer;
             margin: 0 5px;
             background-color: #007bff;
@@ -55,21 +56,21 @@
 
         .quantity-wrapper input {
             text-align: center;
-            width: 60px;
-            font-size: 20px;
-            padding: 10px;
+            width: 50px;
+            font-size: 18px;
+            padding: 5px;
             border: 2px solid #007bff;
             border-radius: 5px;
         }
 
         .buttons {
-            margin-top: 20px;
+            margin-top: 15px;
         }
 
         button {
-            margin: 10px;
-            padding: 15px 30px;
-            font-size: 18px;
+            margin: 5px;
+            padding: 10px 20px;
+            font-size: 16px;
             cursor: pointer;
             border: none;
             border-radius: 8px;
@@ -100,9 +101,11 @@
         }
 
         #accepted-list {
-            margin-top: 20px;
+            margin-top: 10px;
             list-style-type: none;
             padding: 0;
+            max-height: 100px; /* Limit height for mobile responsiveness */
+            overflow-y: auto;
         }
 
         #accepted-list li {
@@ -115,16 +118,46 @@
         }
 
         #scan-result {
-            margin-top: 20px;
-            font-size: 20px;
+            margin-top: 10px;
+            font-size: 16px;
             font-weight: bold;
             color: #333;
         }
 
         .title {
-            font-size: 24px;
-            margin-bottom: 20px;
+            font-size: 20px;
+            margin-bottom: 15px;
             color: #007bff;
+        }
+
+        @media (max-width: 500px) {
+            .quantity-wrapper button {
+                width: 40px;
+                font-size: 16px;
+            }
+
+            .quantity-wrapper input {
+                width: 40px;
+                font-size: 16px;
+            }
+
+            button {
+                font-size: 14px;
+                padding: 8px 16px;
+            }
+
+            #reader {
+                height: 150px; /* Smaller camera area for very small screens */
+            }
+
+            #accepted-list li {
+                font-size: 14px;
+                padding: 8px;
+            }
+
+            .title {
+                font-size: 18px;
+            }
         }
     </style>
 </head>
@@ -220,8 +253,6 @@
                 document.getElementById("quantity-input").disabled = true; // Disable quantity input
                 document.getElementById("accept-btn").disabled = true; // Disable "Accept" button
                 document.getElementById("reject-btn").disabled = true; // Disable "Reject" button
-            } else {
-                alert("Please scan a QR code and enter a valid quantity!");
             }
         });
 
@@ -240,9 +271,6 @@
             if (!html5QrCode) {
                 initializeScanner(); // Initialize the scanner if not already done
             }
-            document.getElementById("quantity-input").disabled = true; // Disable quantity input until scan
-            document.getElementById("accept-btn").disabled = true; // Disable "Accept" button
-            document.getElementById("reject-btn").disabled = true; // Disable "Reject" button
             startScanner(); // Start scanning
         });
 
@@ -251,14 +279,16 @@
             stopScanner();
         });
 
-        // Plus button event listener
-        document.getElementById("plus-btn").addEventListener("click", () => {
+        // Plus button event listener with preventDefault
+        document.getElementById("plus-btn").addEventListener("click", (e) => {
+            e.preventDefault();
             let quantity = parseInt(document.getElementById("quantity-input").value);
             document.getElementById("quantity-input").value = quantity + 1;
         });
 
-        // Minus button event listener
-        document.getElementById("minus-btn").addEventListener("click", () => {
+        // Minus button event listener with preventDefault
+        document.getElementById("minus-btn").addEventListener("click", (e) => {
+            e.preventDefault();
             let quantity = parseInt(document.getElementById("quantity-input").value);
             if (quantity > 1) {
                 document.getElementById("quantity-input").value = quantity - 1;
