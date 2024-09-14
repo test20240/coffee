@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ZXing Barcode/QR Code Scanner</title>
-    <!-- ZXing library -->
+    <!-- Correct ZXing library -->
     <script src="https://unpkg.com/@zxing/browser@latest"></script>
     <style>
         body {
@@ -71,7 +71,7 @@
 </head>
 <body>
 
-    <h1>ZXing Barcode/QR Code Scannereee</h1>
+    <h1>ZXing Barcode/QR Code Scanner</h1>
 
     <!-- Camera window -->
     <div id="scanner-container">
@@ -142,26 +142,23 @@
             // Function to start the scanner
             async function startScanner() {
                 try {
+                    // Initialize ZXing BrowserMultiFormatReader
                     codeReader = new ZXing.BrowserMultiFormatReader();
-                    await codeReader.decodeFromVideoDevice(null, 'scanner', (result, error) => {
-                        if (result) {
-                            currentCode = result.text;
-                            codeOutput.textContent = currentCode;
-                            codeResult.classList.remove('hidden'); // Show code result
+                    const result = await codeReader.decodeFromVideoDevice(null, 'scanner');
+                    if (result) {
+                        currentCode = result.text;
+                        codeOutput.textContent = currentCode;
+                        codeResult.classList.remove('hidden'); // Show code result
 
-                            // Enable Accept and Reject buttons
-                            acceptBtn.disabled = false;
-                            rejectBtn.disabled = false;
+                        // Enable Accept and Reject buttons
+                        acceptBtn.disabled = false;
+                        rejectBtn.disabled = false;
 
-                            // Stop scanning after one scan
-                            codeReader.reset();
-                        }
-                        if (error) {
-                            console.error("Scan error: ", error);
-                        }
-                    });
+                        // Stop scanning after one scan
+                        codeReader.reset();
+                    }
                 } catch (err) {
-                    console.error("Camera initialization error: ", err);
+                    console.error("Camera initialization error or scanning error: ", err);
                 }
             }
 
