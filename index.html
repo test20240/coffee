@@ -17,21 +17,37 @@
         #result {
             margin-top: 20px;
         }
+        #confirm {
+            margin-top: 10px;
+            display: none;
+        }
     </style>
 </head>
 <body>
     <h1>QuaggaJS Barcode Scanner</h1>
     <div id="camera"></div>
     <div id="result"></div>
+    <button id="confirm">Confirm Barcode</button>
     <script>
         const scannedBarcodes = [];
+        let currentCode = null;
 
         function onDetected(result) {
             const code = result.codeResult.code;
             console.log(`Code scanned = ${code}`);
-            document.getElementById('result').innerText += `Scanned: ${code}\n`;
-            scannedBarcodes.push(code);
+            currentCode = code;
+            document.getElementById('result').innerText = `Scanned: ${code}`;
+            document.getElementById('confirm').style.display = 'block';
         }
+
+        document.getElementById('confirm').addEventListener('click', () => {
+            if (currentCode) {
+                scannedBarcodes.push(currentCode);
+                document.getElementById('result').innerText += `\nConfirmed: ${currentCode}`;
+                document.getElementById('confirm').style.display = 'none';
+                currentCode = null;
+            }
+        });
 
         Quagga.init({
             inputStream: {
