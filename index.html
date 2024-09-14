@@ -29,6 +29,27 @@
             margin: 0 auto;
         }
 
+        .quantity-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .quantity-wrapper button {
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 0 5px;
+        }
+
+        .quantity-wrapper input {
+            text-align: center;
+            width: 50px;
+            font-size: 18px;
+            padding: 5px;
+        }
+
         .buttons {
             margin-top: 20px;
         }
@@ -60,22 +81,20 @@
             font-size: 18px;
             font-weight: bold;
         }
-
-        #quantity-input {
-            margin-top: 10px;
-            font-size: 16px;
-            padding: 5px;
-            width: 50px;
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <div id="scan-result"></div>
-        <input type="number" id="quantity-input" placeholder="Qty" disabled />
         <div id="reader" style="display: none;"></div>
+        <div class="quantity-wrapper">
+            <button id="plus-btn">+</button>
+            <input type="number" id="quantity-input" value="1" disabled />
+            <button id="minus-btn">-</button>
+        </div>
         <div class="buttons">
             <button id="new-btn">New</button>
+            <button id="stop-btn" style="display: none;">Stop</button>
             <button id="accept-btn" disabled>Accept</button>
             <button id="reject-btn" disabled>Reject</button>
         </div>
@@ -96,7 +115,8 @@
         function startScanner() {
             document.getElementById("reader").style.display = "block"; // Show the camera
             document.getElementById("scan-result").textContent = ""; // Clear previous scan result
-            document.getElementById("quantity-input").value = ""; // Clear quantity input
+            document.getElementById("quantity-input").value = "1"; // Reset quantity to 1
+            document.getElementById("quantity-input").disabled = true; // Disable quantity input until scan
             currentScanData = null;
 
             const qrCodeSuccessCallback = (qrCodeMessage) => {
@@ -114,6 +134,9 @@
             html5QrCode.start(config, qrCodeConfig, qrCodeSuccessCallback).catch(err => {
                 console.error("Unable to start the QR code scanner:", err);
             });
+
+            // Show the stop button
+            document.getElementById("stop-btn").style.display = "inline-block";
         }
 
         // Stop QR code scanner
@@ -121,6 +144,7 @@
             if (html5QrCode) {
                 html5QrCode.stop().then(() => {
                     document.getElementById("reader").style.display = "none"; // Hide the camera
+                    document.getElementById("stop-btn").style.display = "none"; // Hide the stop button
                 }).catch(err => {
                     console.error("Unable to stop the QR code scanner:", err);
                 });
@@ -146,7 +170,7 @@
                 updateAcceptedList();
                 currentScanData = null;
                 document.getElementById("scan-result").textContent = ""; // Clear scan result
-                document.getElementById("quantity-input").value = ""; // Clear quantity input
+                document.getElementById("quantity-input").value = "1"; // Reset quantity to 1
                 document.getElementById("quantity-input").disabled = true; // Disable quantity input
                 document.getElementById("accept-btn").disabled = true; // Disable "Accept" button
                 document.getElementById("reject-btn").disabled = true; // Disable "Reject" button
@@ -159,7 +183,7 @@
         document.getElementById("reject-btn").addEventListener("click", () => {
             currentScanData = null;
             document.getElementById("scan-result").textContent = ""; // Clear scan result
-            document.getElementById("quantity-input").value = ""; // Clear quantity input
+            document.getElementById("quantity-input").value = "1"; // Reset quantity to 1
             document.getElementById("quantity-input").disabled = true; // Disable quantity input
             document.getElementById("accept-btn").disabled = true; // Disable "Accept" button
             document.getElementById("reject-btn").disabled = true; // Disable "Reject" button
@@ -174,6 +198,25 @@
             document.getElementById("accept-btn").disabled = true; // Disable "Accept" button
             document.getElementById("reject-btn").disabled = true; // Disable "Reject" button
             startScanner(); // Start scanning
+        });
+
+        // Stop button event listener
+        document.getElementById("stop-btn").addEventListener("click", () => {
+            stopScanner();
+        });
+
+        // Plus button event listener
+        document.getElementById("plus-btn").addEventListener("click", () => {
+            let quantity = parseInt(document.getElementById("quantity-input").value);
+            document.getElementById("quantity-input").value = quantity + 1;
+        });
+
+        // Minus button event listener
+        document.getElementById("minus-btn").addEventListener("click", () => {
+            let quantity = parseInt(document.getElementById("quantity-input").value);
+            if (quantity > 1) {
+                document.getElementById("quantity-input").value = quantity - 1;
+            }
         });
 
         // Initialize the QR code scanner on page load
