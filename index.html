@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unified Barcode/QR Code Scanner</title>
-    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+    <title>ZXing Barcode Scanner</title>
+    <script src="https://unpkg.com/@zxing/browser@latest/umd/index.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -16,6 +16,7 @@
 
         #scanner-container {
             display: none;
+            position: relative;
             width: 100%;
             max-width: 600px;
             margin: 20px auto;
@@ -27,7 +28,7 @@
             border: 1px solid #ccc;
         }
 
-        #code-result {
+        #barcode-result {
             text-align: center;
             font-size: 18px;
             margin: 20px;
@@ -70,16 +71,16 @@
 </head>
 <body>
 
-    <h1>Unified Barcode/QR Code Scanner</h1>
+    <h1>ZXing Barcode Scanner</h1>
 
     <!-- Camera window -->
     <div id="scanner-container">
-        <div id="scanner"></div>
+        <video id="scanner" muted></video>
     </div>
 
-    <!-- Code result display -->
-    <div id="code-result" class="hidden">
-        Scanned Code: <span id="code-output">Waiting for scan...</span>
+    <!-- Barcode result display -->
+    <div id="barcode-result" class="hidden">
+        Scanned Barcode: <span id="barcode-output">Waiting for scan...</span>
     </div>
 
     <!-- Control buttons -->
@@ -89,11 +90,11 @@
         <button id="reject-btn" disabled>Reject</button>
     </div>
 
-    <!-- List of accepted codes -->
+    <!-- List of accepted barcodes -->
     <table id="accepted-list" class="hidden">
         <thead>
             <tr>
-                <th>Accepted Code</th>
+                <th>Accepted Barcode</th>
             </tr>
         </thead>
         <tbody>
@@ -102,14 +103,14 @@
     </table>
 
     <script>
-        let html5QrCode;
-        let currentCode = null;
-        let acceptedCodes = [];
+        const codeReader = new ZXing.BrowserMultiFormatReader();
+        let currentBarcode = null;
+        let acceptedBarcodes = [];
 
         document.addEventListener("DOMContentLoaded", function () {
             const scannerContainer = document.getElementById('scanner-container');
-            const codeResult = document.getElementById('code-result');
-            const codeOutput = document.getElementById('code-output');
+            const barcodeResult = document.getElementById('barcode-result');
+            const barcodeOutput = document.getElementById('barcode-output');
             const acceptBtn = document.getElementById('accept-btn');
             const rejectBtn = document.getElementById('reject-btn');
             const newScanBtn = document.getElementById('new-scan-btn');
@@ -119,71 +120,61 @@
             newScanBtn.addEventListener('click', function () {
                 startScanner();
                 scannerContainer.style.display = 'block'; // Show the scanner
-                codeResult.classList.add('hidden'); // Hide code result
+                barcodeResult.classList.add('hidden'); // Hide barcode result
                 acceptBtn.disabled = true;
                 rejectBtn.disabled = true;
             });
 
             // Accept button logic
             acceptBtn.addEventListener('click', function () {
-                if (currentCode) {
-                    acceptedCodes.push(currentCode);
+                if (currentBarcode) {
+                    acceptedBarcodes.push(currentBarcode);
                     updateAcceptedList();
-                    clearCodeResult();
+                    clearBarcodeResult();
                 }
             });
 
             // Reject button logic
             rejectBtn.addEventListener('click', function () {
-                clearCodeResult();
+                clearBarcodeResult();
             });
 
             // Function to start the scanner
             function startScanner() {
-                // Check if the camera is available and ask for permission
-                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                    html5QrCode = new Html5Qrcode("scanner");
-                    html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 },
-                        qrCodeMessage => {
-                            currentCode = qrCodeMessage;
-                            codeOutput.textContent = currentCode;
-                            codeResult.classList.remove('hidden'); // Show code result
+                codeReader.decodeOnceFromVideoDevice(undefined, 'scanner')
+                    .then(result => {
+                        currentBarcode = result.text;
+                        barcodeOutput.textContent = currentBarcode;
+                        barcodeResult.classList.remove('hidden'); // Show barcode result
 
-                            // Enable Accept and Reject buttons
-                            acceptBtn.disabled = false;
-                            rejectBtn.disabled = false;
-
-                            // Stop scanning after one scan
-                            html5QrCode.stop();
-                        },
-                        err => console.warn("Scan error: ", err))
-                        .catch(err => console.error("Camera permission error: ", err));
-                } else {
-                    alert("Camera is not supported by this browser.");
-                }
+                        // Enable Accept and Reject buttons
+                        acceptBtn.disabled = false;
+                        rejectBtn.disabled = false;
+                    })
+                    .catch(err => console.error(err));
             }
 
-            // Function to update the accepted code list
+            // Function to update the accepted barcode list
             function updateAcceptedList() {
                 const tbody = acceptedList.querySelector('tbody');
                 tbody.innerHTML = ''; // Clear current list
 
-                acceptedCodes.forEach(code => {
+                acceptedBarcodes.forEach(barcode => {
                     const row = document.createElement('tr');
                     const cell = document.createElement('td');
-                    cell.textContent = code;
+                    cell.textContent = barcode;
                     row.appendChild(cell);
                     tbody.appendChild(row);
                 });
 
-                acceptedList.classList.remove('hidden'); // Show the accepted code list
+                acceptedList.classList.remove('hidden'); // Show the accepted barcode list
             }
 
-            // Function to clear the displayed code result
-            function clearCodeResult() {
-                currentCode = null;
-                codeOutput.textContent = "Waiting for scan...";
-                codeResult.classList.add('hidden'); // Hide code result
+            // Function to clear the displayed barcode result
+            function clearBarcodeResult() {
+                currentBarcode = null;
+                barcodeOutput.textContent = "Waiting for scan...";
+                barcodeResult.classList.add('hidden'); // Hide barcode result
                 acceptBtn.disabled = true;
                 rejectBtn.disabled = true;
             }
