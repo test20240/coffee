@@ -140,10 +140,13 @@
 
             // Function to start the scanner
             function startScanner() {
-                // Check if the camera is available and ask for permission
                 if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                    // Initialize Html5Qrcode object
                     html5QrCode = new Html5Qrcode("scanner");
-                    html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 },
+
+                    html5QrCode.start(
+                        { facingMode: "environment" }, // QR Code scanning settings
+                        { fps: 10, qrbox: 250 }, // Scan settings
                         qrCodeMessage => {
                             currentCode = qrCodeMessage;
                             codeOutput.textContent = currentCode;
@@ -156,8 +159,8 @@
                             // Stop scanning after one scan
                             html5QrCode.stop();
                         },
-                        err => console.warn("Scan error: ", err))
-                        .catch(err => console.error("Camera permission error: ", err));
+                        err => console.warn("Scan error: ", err)
+                    ).catch(err => console.error("Camera permission error: ", err));
                 } else {
                     alert("Camera is not supported by this browser.");
                 }
