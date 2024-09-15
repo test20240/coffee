@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Scanner Example</title>
+    <script src="https://unpkg.com/qr-scanner/qr-scanner.min.js"></script>
+</head>
+<body>
+    <video id="qr-video"></video>
+    <div id="result"></div>
+    <script>
+        const video = document.getElementById('qr-video');
+        const resultDiv = document.getElementById('result');
+        const qrScanner = new QrScanner(video, result => {
+            console.log('decoded qr code:', result);
+            resultDiv.textContent = `Decoded result: ${result}`;
+        });
+        qrScanner.start();
+    </script>
+</body>
+</html>
