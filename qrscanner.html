@@ -9,6 +9,7 @@
         #reader {
             width: 100%;
             max-height: 25vh;
+            overflow: hidden;
         }
         #scanned-codes, #final-codes {
             margin-top: 20px;
@@ -33,19 +34,44 @@
     <script>
         const scannedList = document.getElementById('scanned-list');
         const finalList = document.getElementById('final-list');
+        const scannedCodes = {};
 
         function onScanSuccess(decodedText, decodedResult) {
             console.log(`Code scanned = ${decodedText}`, decodedResult);
-            const listItem = document.createElement('li');
-            listItem.className = 'code-item';
-            listItem.innerHTML = `${decodedText} <button onclick="acceptCode('${decodedText}')">Accept</button>`;
-            scannedList.appendChild(listItem);
+            if (scannedCodes[decodedText]) {
+                scannedCodes[decodedText].count++;
+                updateFinalList();
+            } else {
+                const listItem = document.createElement('li');
+                listItem.className = 'code-item';
+                listItem.innerHTML = `${decodedText} <button onclick="acceptCode('${decodedText}', this)">Accept</button>`;
+                scannedList.appendChild(listItem);
+            }
         }
 
-        function acceptCode(code) {
-            const finalItem = document.createElement('li');
-            finalItem.textContent = code;
-            finalList.appendChild(finalItem);
+        function acceptCode(code, button) {
+            if (!scannedCodes[code]) {
+                scannedCodes[code] = { count: 1 };
+            }
+            button.parentElement.remove();
+            updateFinalList();
+        }
+
+        function updateFinalList() {
+            finalList.innerHTML = '';
+            for (const code in scannedCodes) {
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `${code} - Quantity: ${scannedCodes[code].count} <button onclick="adjustQuantity('${code}', 1)">+</button> <button onclick="adjustQuantity('${code}', -1)">-</button>`;
+                finalList.appendChild(listItem);
+            }
+        }
+
+        function adjustQuantity(code, amount) {
+            scannedCodes[code].count += amount;
+            if (scannedCodes[code].count <= 0) {
+                delete scannedCodes[code];
+            }
+            updateFinalList();
         }
 
         let html5QrcodeScanner = new Html5QrcodeScanner(
