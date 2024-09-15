@@ -9,19 +9,26 @@
             margin-top: 20px;
             font-size: 1.2em;
         }
+        #support {
+            margin-top: 20px;
+            font-size: 1.2em;
+            color: red;
+        }
     </style>
 </head>
 <body>
     <h1>Barcode Detection Example</h1>
     <p>Ensure you are using a mobile browser that supports the Barcode Detection API.</p>
     <video id="video" width="600" height="400" autoplay></video>
+    <div id="support"></div>
     <div id="results"></div>
     <script>
         // Check if the Barcode Detection API is supported
+        const supportDiv = document.getElementById('support');
         if (!('BarcodeDetector' in window)) {
-            console.log('Barcode Detector is not supported by this browser.');
+            supportDiv.textContent = 'Barcode Detector is not supported by this browser.';
         } else {
-            console.log('Barcode Detector supported!');
+            supportDiv.textContent = 'Barcode Detector supported!';
         }
 
         // Access the user's camera
