@@ -3,20 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Scanner Example</title>
-    <script src="https://unpkg.com/qr-scanner/qr-scanner.min.js"></script>
+    <title>html5-qrcode Example</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+    <style>
+        #reader {
+            width: 100%;
+            max-height: 25vh;
+        }
+        #scanned-codes, #final-codes {
+            margin-top: 20px;
+        }
+        .code-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+    </style>
 </head>
 <body>
-    <video id="qr-video"></video>
-    <div id="result"></div>
+    <div id="reader"></div>
+    <div id="scanned-codes">
+        <h3>Scanned Codes</h3>
+        <ul id="scanned-list"></ul>
+    </div>
+    <div id="final-codes">
+        <h3>Final List of Scanned Codes</h3>
+        <ul id="final-list"></ul>
+    </div>
     <script>
-        const video = document.getElementById('qr-video');
-        const resultDiv = document.getElementById('result');
-        const qrScanner = new QrScanner(video, result => {
-            console.log('decoded qr code:', result);
-            resultDiv.textContent = `Decoded result: ${result}`;
-        });
-        qrScanner.start();
+        const scannedList = document.getElementById('scanned-list');
+        const finalList = document.getElementById('final-list');
+
+        function onScanSuccess(decodedText, decodedResult) {
+            console.log(`Code scanned = ${decodedText}`, decodedResult);
+            const listItem = document.createElement('li');
+            listItem.className = 'code-item';
+            listItem.innerHTML = `${decodedText} <button onclick="acceptCode('${decodedText}')">Accept</button>`;
+            scannedList.appendChild(listItem);
+        }
+
+        function acceptCode(code) {
+            const finalItem = document.createElement('li');
+            finalItem.textContent = code;
+            finalList.appendChild(finalItem);
+        }
+
+        let html5QrcodeScanner = new Html5QrcodeScanner(
+            "reader", { fps: 10, qrbox: 250 });
+        html5QrcodeScanner.render(onScanSuccess);
     </script>
 </body>
 </html>
